@@ -1,0 +1,118 @@
+{
+  "name": "03 - Slots Livres (Get Free Slots)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "slots-livres",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b1111111-1111-4111-8111-111111111111",
+      "name": "Webhook - Slots Livres",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-480, 0],
+      "webhookId": "slots-livres"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Le o parametro ?mes=YYYY-MM da query (default: mes atual)\nconst q = $input.first().json.query || {};\nconst pad = (n) => String(n).padStart(2, '0');\n\nlet mes = String(q.mes || '').trim();\nif (!/^\\d{4}-\\d{2}$/.test(mes)) {\n  const agora = new Date();\n  mes = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`;\n}\n\nconst [ano, m] = mes.split('-').map(Number);\n\n// Intervalo [primeiro dia do mes, primeiro dia do mes seguinte), fuso -03:00\nconst timeMin = `${ano}-${pad(m)}-01T00:00:00-03:00`;\nconst proximoAno = m === 12 ? ano + 1 : ano;\nconst proximoMes = m === 12 ? 1 : m + 1;\nconst timeMax = `${proximoAno}-${pad(proximoMes)}-01T00:00:00-03:00`;\n\n// Todos os dias do mes (para o front saber o que e livre)\nconst totalDias = new Date(ano, m, 0).getDate();\nconst todos = [];\nfor (let d = 1; d <= totalDias; d++) {\n  todos.push(`${ano}-${pad(m)}-${pad(d)}`);\n}\n\nreturn [{ json: { mes, timeMin, timeMax, todos } }];"
+      },
+      "id": "b2222222-2222-4222-8222-222222222222",
+      "name": "Calcular Mes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-240, 0]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "SEU_CALENDAR_ID@group.calendar.google.com",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "options": {
+          "timeMin": "={{ $json.timeMin }}",
+          "timeMax": "={{ $json.timeMax }}",
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "id": "b3333333-3333-4333-8333-333333333333",
+      "name": "Google Calendar - Buscar Eventos do Mes",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [20, 0],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "name": "Google Calendar - Faxinas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Extrai os dias que possuem algum evento (ocupados)\nconst cfg = $('Calcular Mes').first().json;\nconst ocupados = new Set();\n\nfor (const item of $input.all()) {\n  const ev = item.json || {};\n  const start = ev.start || ev.startDate || {};\n  const bruto = (typeof start === 'object') ? (start.date || start.dateTime) : start;\n  if (!bruto) continue;\n  ocupados.add(String(bruto).substring(0, 10));\n}\n\nconst diasOcupados = Array.from(ocupados).sort();\nconst diasLivres = cfg.todos.filter((d) => !ocupados.has(d));\n\nreturn [{ json: { mes: cfg.mes, diasOcupados, diasLivres } }];"
+      },
+      "id": "b4444444-4444-4444-8444-444444444444",
+      "name": "Formatar Dias Ocupados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ mes: $json.mes, diasOcupados: $json.diasOcupados, diasLivres: $json.diasLivres }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "id": "b5555555-5555-4555-8555-555555555555",
+      "name": "Responder Slots",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [540, 0]
+    }
+  ],
+  "connections": {
+    "Webhook - Slots Livres": {
+      "main": [
+        [{ "node": "Calcular Mes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Calcular Mes": {
+      "main": [
+        [{ "node": "Google Calendar - Buscar Eventos do Mes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Google Calendar - Buscar Eventos do Mes": {
+      "main": [
+        [{ "node": "Formatar Dias Ocupados", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatar Dias Ocupados": {
+      "main": [
+        [{ "node": "Responder Slots", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

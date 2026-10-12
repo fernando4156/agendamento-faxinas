@@ -85,14 +85,42 @@ Os dois arquivos JSON desta pasta são workflows prontos para **importar** no n8
 
 ---
 
-## 3) Próximo fluxo: "Get Free Slots"
+## 3) `03-slots-livres.json` — Get Free Slots (disponibilidade)
 
-Ainda **não** incluído. A ideia é expor `GET /webhook/slots-livres?mes=2026-11`:
+**Fluxo:** `Webhook → Calcular Mes → Google Calendar (buscar mês) → Formatar Dias Ocupados → Responder`
 
-1. `Webhook` recebe o mês.
-2. `Google Calendar - Buscar Eventos` no intervalo do mês.
-3. `Code` monta a lista de dias ocupados.
-4. `Responder` devolve `{ "diasOcupados": ["2026-11-20", ...] }` para o frontend **desativar** essas datas no calendário.
+É o fluxo que o **frontend** chama para saber quais datas estão reservadas e **desativá-las** no calendário.
+
+| # | Nó | Tipo | O que faz |
+|---|----|------|-----------|
+| 1 | **Webhook - Slots Livres** | `webhook` | Responde `GET /webhook/slots-livres?mes=YYYY-MM`. |
+| 2 | **Calcular Mes** | `code` | Lê `?mes`, valida (default = mês atual) e monta o intervalo `timeMin`/`timeMax` (fuso `-03:00`) + a lista de todos os dias do mês. |
+| 3 | **Google Calendar - Buscar Eventos do Mes** | `googleCalendar` | Lista eventos do mês (`returnAll`, `singleEvents`, `orderBy=startTime`). Tem `alwaysOutputData` para funcionar mesmo sem eventos. |
+| 4 | **Formatar Dias Ocupados** | `code` | Extrai a data de início de cada evento (`date` ou `dateTime`) e devolve `diasOcupados` e `diasLivres`. |
+| 5 | **Responder Slots** | `respondToWebhook` | Devolve JSON + cabeçalhos **CORS**. |
+
+### Resposta
+
+```json
+{
+  "mes": "2026-11",
+  "diasOcupados": ["2026-11-05", "2026-11-20"],
+  "diasLivres": ["2026-11-01", "2026-11-02", "..."]
+}
+```
+
+O frontend usa `diasOcupados` para pintar de vermelho e desativar o clique.
+
+---
+
+## 🔗 CORS e o corpo "text/plain"
+
+O frontend roda em outra origem (ex.: `http://localhost:5500`), então dois cuidados foram tomados:
+
+1. **`GET` dos slots:** os nós de resposta enviam `Access-Control-Allow-Origin: *` (via *response headers*).
+2. **`POST` de agendamento/cancelamento:** o frontend envia o corpo como `Content-Type: text/plain` (um tipo "simples", que **não** dispara *preflight* `OPTIONS`). Por isso os nós `code` fazem `JSON.parse` quando o corpo chega como texto.
+
+> Se você publicar o frontend atrás de um domínio próprio, pode trocar `*` pelo domínio exato na lista de origens permitidas.
 
 ---
 

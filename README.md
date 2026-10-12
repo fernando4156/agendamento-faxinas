@@ -98,6 +98,7 @@ Os fluxos ficam na pasta [`workflows/`](./workflows) e são **importáveis** no 
 | ------------------------------------ | -------------------------------------- |
 | `01-agendamento-faxina.json`         | Recebe o agendamento e avisa no WhatsApp |
 | `02-cancelamento-faxina.json`        | Cancela e libera a data, avisando no WhatsApp |
+| `03-slots-livres.json`               | Get Free Slots: informa as datas ocupadas ao frontend |
 
 Detalhes de cada nó e como configurar: **[`docs/n8n-workflows.md`](./docs/n8n-workflows.md)**.
 
@@ -114,7 +115,13 @@ agendamento-faxinas/
 ├── .gitignore                    # blindagem de segredos e dados locais
 ├── workflows/
 │   ├── 01-agendamento-faxina.json
-│   └── 02-cancelamento-faxina.json
+│   ├── 02-cancelamento-faxina.json
+│   └── 03-slots-livres.json
+├── frontend/
+│   ├── index.html                # página da cliente (calendário + formulários)
+│   ├── styles.css
+│   ├── config.js                 # só URLs públicas (sem segredos)
+│   └── app.js
 ├── docs/
 │   └── n8n-workflows.md          # explicação nó a nó
 └── README.md
@@ -122,9 +129,34 @@ agendamento-faxinas/
 
 ---
 
+## 💻 Frontend (página da cliente)
+
+Página estática em HTML/CSS/JS, sem build e sem dependências. Ela:
+
+- carrega o mês atual e **desativa** os dias já reservados (`GET /slots-livres`);
+- abre um formulário ao clicar num dia livre e envia para o webhook de agendamento;
+- tem uma seção de **cancelamento** (nome + data).
+
+### Como rodar localmente
+
+Qualquer servidor estático serve. Exemplos:
+
+```powershell
+# com Python
+cd frontend
+python -m http.server 5500
+# abra http://localhost:5500
+```
+
+Ou use a extensão **Live Server** do VS Code. Ajuste a URL do n8n em `frontend/config.js`
+(`N8N_BASE_URL`) se necessário.
+
+---
+
 ## 🗺️ Próximos passos
 
-- [ ] Frontend: página HTML com calendário que **desativa datas ocupadas** (endpoint "Get Free Slots").
-- [ ] Workflow n8n extra: `GET /slots-livres` lendo o Google Calendar para o frontend.
-- [ ] Expor o n8n na internet (túnel/reverse proxy) para o formulário funcionar de qualquer celular.
+- [x] Frontend: calendário que **desativa datas ocupadas** (endpoint "Get Free Slots").
+- [x] Workflow n8n `GET /slots-livres` lendo o Google Calendar.
 - [ ] Google Calendar via **OAuth2** configurado como credencial no n8n.
+- [ ] Expor o n8n na internet (túnel/reverse proxy) para o formulário funcionar de qualquer celular.
+- [ ] Cron de lembrete (ex.: véspera do serviço) avisando a sua mãe e a cliente.

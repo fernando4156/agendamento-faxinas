@@ -19,7 +19,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// Recebe { nome, data } para localizar e excluir o evento\nconst src = $input.first().json;\nconst b = (src && typeof src.body === 'object' && src.body) ? src.body : src;\n\nconst nome = String(b.nome || b.name || '').trim();\nconst dataBruta = String(b.data || b.date || '').substring(0, 10);\nconst [ano, mes, dia] = dataBruta.split('-').map(Number);\n\nif (!ano || !mes || !dia) {\n  throw new Error('Data invalida. Envie no formato YYYY-MM-DD.');\n}\nif (!nome) {\n  throw new Error('Informe o nome da cliente para localizar o agendamento.');\n}\n\nconst pad = (n) => String(n).padStart(2, '0');\n// Dia inteiro para garimpar qualquer evento daquele dia\nconst inicioISO = `${ano}-${pad(mes)}-${pad(dia)}T00:00:00-03:00`;\nconst fimISO = `${ano}-${pad(mes)}-${pad(dia)}T23:59:59-03:00`;\n\nreturn [{ json: { nome, dataBruta, inicioISO, fimISO } }];"
+        "jsCode": "// Recebe { nome, data } para localizar e excluir o evento\nconst src = $input.first().json;\nlet b = (src && src.body !== undefined) ? src.body : src;\nif (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }\n\nconst nome = String(b.nome || b.name || '').trim();\nconst dataBruta = String(b.data || b.date || '').substring(0, 10);\nconst [ano, mes, dia] = dataBruta.split('-').map(Number);\n\nif (!ano || !mes || !dia) {\n  throw new Error('Data invalida. Envie no formato YYYY-MM-DD.');\n}\nif (!nome) {\n  throw new Error('Informe o nome da cliente para localizar o agendamento.');\n}\n\nconst pad = (n) => String(n).padStart(2, '0');\n// Dia inteiro para garimpar qualquer evento daquele dia\nconst inicioISO = `${ano}-${pad(mes)}-${pad(dia)}T00:00:00-03:00`;\nconst fimISO = `${ano}-${pad(mes)}-${pad(dia)}T23:59:59-03:00`;\n\nreturn [{ json: { nome, dataBruta, inicioISO, fimISO } }];"
       },
       "id": "a2222222-2222-4222-8222-222222222222",
       "name": "Preparar Busca",
@@ -129,7 +129,15 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify({ status: 'ok', mensagem: 'Cancelamento registrado e agenda liberada!' }) }}",
-        "options": {}
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
       },
       "id": "a8888888-8888-4888-8888-888888888888",
       "name": "Responder a Cliente",

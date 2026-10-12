@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agende sua Faxina</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <h1>🧹 Agende sua Faxina</h1>
+    <p>Escolha um dia disponível no calendário. Simples assim — sem cadastro e sem senha.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="cal-header">
+        <button id="btnPrev" type="button" aria-label="Mês anterior">&#8249;</button>
+        <h2 id="tituloMes">—</h2>
+        <button id="btnNext" type="button" aria-label="Próximo mês">&#8250;</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot dot-free"></i> Livre</span>
+        <span><i class="dot dot-busy"></i> Reservado</span>
+        <span><i class="dot dot-disabled"></i> Indisponível</span>
+      </div>
+
+      <div id="grid" class="grid"></div>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>Precisa cancelar um agendamento?</h2>
+      <p>Informe seu nome e a data reservada para liberar o dia.</p>
+      <form id="formCancel" class="form">
+        <label>Seu nome completo
+          <input id="nomeCancel" type="text" required placeholder="Como você agendou" />
+        </label>
+        <label>Data do agendamento
+          <input id="dataCancel" type="date" required />
+        </label>
+        <button type="submit" class="btn-secondary">Cancelar agendamento</button>
+        <p id="mensagemCancel" class="msg"></p>
+      </form>
+    </section>
+  </main>
+
+  <!-- Modal de agendamento -->
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal">
+      <button id="btnFecharModal" class="modal-close" type="button" aria-label="Fechar">&times;</button>
+      <h2>Confirmar agendamento</h2>
+      <p>Dia escolhido: <strong id="dataEscolhida">—</strong></p>
+      <form id="formAgendamento" class="form">
+        <label>Seu nome completo
+          <input id="nome" type="text" required autocomplete="name" />
+        </label>
+        <label>Endereço completo
+          <input id="endereco" type="text" required autocomplete="street-address" />
+        </label>
+        <label>Seu contato (WhatsApp)
+          <input id="contato" type="tel" required placeholder="(41) 99999-9999" autocomplete="tel" />
+        </label>
+        <button type="submit" class="btn-primary">Confirmar agendamento</button>
+        <p id="mensagem" class="msg"></p>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Feito com carinho para facilitar o dia a dia. 💙</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
