@@ -1,0 +1,95 @@
+# =============================================================================
+# .gitignore - blindagem contra vazamento de segredos e dados locais
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# SEGREDOS / VARIAVEIS DE AMBIENTE  (o mais critico)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+secrets/
+credentials/
+*.secret
+
+# -----------------------------------------------------------------------------
+# Dados locais do Docker / volumes (sessoes WhatsApp, banco, cache, n8n)
+# -----------------------------------------------------------------------------
+data/
+volumes/
+docker-data/
+
+# Evolution API - sessoes e QR codes (contem a credencial do WhatsApp!)
+instances/
+evolution_instances/
+evolution/instances/
+*.qrcode.png
+qrcode*.png
+qr-code*.png
+
+# n8n - banco local, configuracoes e chaves
+.n8n/
+n8n_data/
+*.sqlite
+*.sqlite3
+*.db
+
+# -----------------------------------------------------------------------------
+# Chaves e certificados
+# -----------------------------------------------------------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+credentials.json
+client_secret*.json
+service-account*.json
+token.json
+
+# -----------------------------------------------------------------------------
+# Backups
+# -----------------------------------------------------------------------------
+*.bak
+*.backup
+*.dump
+*.sql.gz
+backups/
+backup/
+
+# -----------------------------------------------------------------------------
+# Logs
+# -----------------------------------------------------------------------------
+*.log
+logs/
+
+# -----------------------------------------------------------------------------
+# Node / dependencias (caso o frontend use npm)
+# -----------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.cache/
+
+# -----------------------------------------------------------------------------
+# Editores / SO
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------------------------------------------------------------------
+# Docker override local (ajustes pessoais que nao vao para o repo)
+# -----------------------------------------------------------------------------
+docker-compose.override.yml
+docker-compose.override.yaml

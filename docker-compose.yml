@@ -1,0 +1,146 @@
+# =============================================================================
+# Agendamento de Faxinas - Stack local (n8n + Evolution API + Postgres + Redis)
+# =============================================================================
+# Uso:
+#   1) Copie .env.example para .env e preencha os valores.
+#   2) docker compose up -d
+#   3) Evolution API:   http://localhost:8080
+#      Manager (QR):    http://localhost:3000
+#      n8n:             http://localhost:5678
+# =============================================================================
+
+name: agendamento-faxinas
+
+services:
+  # ---------------------------------------------------------------------------
+  # Banco unico compartilhado (cria os bancos "evolution" e "n8n" no 1o boot)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: faxina_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TZ}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/10-init-databases.sql:ro
+    networks:
+      - faxina-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Cache/fila da Evolution API
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: faxina_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - faxina-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Evolution API (WhatsApp) - le TODAS as credenciais do .env (env_file)
+  # ---------------------------------------------------------------------------
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.7
+    container_name: faxina_evolution_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - .env
+    volumes:
+      # Sessoes do WhatsApp (QR/credenciais). NUNCA versionar.
+      - evolution_instances:/evolution/instances
+    networks:
+      - faxina-net
+
+  # ---------------------------------------------------------------------------
+  # Evolution Manager (UI para criar instancia e escanear o QR Code)
+  # Pode ser removido depois que a instancia estiver conectada.
+  # ---------------------------------------------------------------------------
+  evolution-manager:
+    image: evoapicloud/evolution-manager:latest
+    container_name: faxina_evolution_manager
+    restart: unless-stopped
+    depends_on:
+      - evolution-api
+    ports:
+      - "127.0.0.1:3000:80"
+    networks:
+      - faxina-net
+
+  # ---------------------------------------------------------------------------
+  # n8n (motor de automacao) - usa o Postgres compartilhado
+  # ---------------------------------------------------------------------------
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: faxina_n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      # --- Banco de dados ---
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_SCHEMA: public
+      # --- Geral ---
+      N8N_HOST: ${N8N_HOST}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: ${N8N_WEBHOOK_URL}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      GENERIC_TIMEZONE: ${TZ}
+      TZ: ${TZ}
+      # --- Seguranca ---
+      # Chave que cifra as credenciais salvas. Gere e guarde; se perder, perde
+      # as credenciais gravadas.
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # Necessario para o login funcionar via http://localhost
+      N8N_SECURE_COOKIE: "false"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      # --- Telemetria desligada ---
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_RUNNERS_ENABLED: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - faxina-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  evolution_instances:
+  n8n_data:
+
+networks:
+  faxina-net:
+    driver: bridge
