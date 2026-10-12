@@ -77,9 +77,28 @@ Depois de subir, os serviços ficam em:
 
 | Serviço             | URL                     | Para quê                                  |
 | ------------------- | ----------------------- | ----------------------------------------- |
-| Evolution Manager   | http://localhost:3000   | Criar instância e **escanear o QR Code**  |
+| **Site da cliente** | **http://localhost:8088** | Página que as clientes usam (via Caddy) |
+| n8n                 | http://localhost:5678   | Editar os fluxos de automação (local)     |
 | Evolution API       | http://localhost:8080   | Enviar mensagens (usada pelo n8n)         |
-| n8n                 | http://localhost:5678   | Editar os fluxos de automação             |
+| Evolution Manager   | http://localhost:3000   | Opcional (`--profile manager`)            |
+
+> 🌐 O **site** é servido pelo **Caddy** (serviço `proxy`), que também encaminha
+> apenas `/webhook/*` para o n8n. O editor do n8n **não** fica exposto — é o
+> serviço `proxy` que vai para a internet quando usamos um túnel.
+
+### Expor na internet (para as clientes acessarem do celular)
+
+```powershell
+# com o stack no ar, abra o tunel publico:
+.\scripts\abrir-tunel.ps1
+```
+
+O `cloudflared` vai imprimir uma URL pública (ex.: `https://algo.trycloudflare.com`).
+Compartilhe essa URL com as clientes — já está com HTTPS.
+
+> ⚠️ A URL do túnel "rápido" **muda** a cada reinício. Para uma URL **fixa**, é
+> preciso um domínio próprio no Cloudflare (túnel nomeado) ou usar ngrok com
+> domínio estático.
 
 ### Conectar o WhatsApp
 
@@ -121,9 +140,10 @@ Detalhes de cada nó e como configurar: **[`docs/n8n-workflows.md`](./docs/n8n-w
 
 ```
 agendamento-faxinas/
-├── docker-compose.yml            # Postgres + Redis + Evolution API + n8n
+├── docker-compose.yml            # Postgres + Redis + Evolution API + n8n + Caddy
 ├── docker/
-│   └── init-db.sql               # cria os bancos "evolution" e "n8n"
+│   ├── init-db.sql               # cria os bancos "evolution" e "n8n"
+│   └── Caddyfile                 # site publico + proxy so dos /webhook/*
 ├── .env.example                  # modelo de variáveis (valores fictícios)
 ├── .gitignore                    # blindagem de segredos e dados locais
 ├── workflows/
@@ -138,7 +158,9 @@ agendamento-faxinas/
 │   └── app.js
 ├── scripts/
 │   ├── testar-whatsapp.ps1       # dispara um teste do WhatsApp
-│   └── abrir-qrcode.ps1          # gera a página do QR Code (conectar WhatsApp)
+│   ├── abrir-qrcode.ps1          # gera a página do QR Code (conectar WhatsApp)
+│   ├── servir-frontend.ps1       # servidor estático (dev, sem proxy)
+│   └── abrir-tunel.ps1           # abre o túnel público (Cloudflare)
 ├── docs/
 │   └── n8n-workflows.md          # explicação nó a nó
 └── README.md
@@ -154,19 +176,20 @@ Página estática em HTML/CSS/JS, sem build e sem dependências. Ela:
 - abre um formulário ao clicar num dia livre e envia para o webhook de agendamento;
 - tem uma seção de **cancelamento** (nome + data).
 
-### Como rodar localmente
+### Como rodar
 
-Qualquer servidor estático serve. Exemplos:
+O jeito recomendado é pelo **proxy Caddy** (já incluso no `docker-compose.yml`):
 
-```powershell
-# com Python
-cd frontend
-python -m http.server 5500
-# abra http://localhost:5500
-```
+1. `docker compose up -d`
+2. Abra **http://localhost:8088**
 
-Ou use a extensão **Live Server** do VS Code. Ajuste a URL do n8n em `frontend/config.js`
-(`N8N_BASE_URL`) se necessário.
+O Caddy serve os arquivos de `frontend/` e encaminha `/webhook/*` para o n8n.
+Assim o site usa caminhos **relativos** (veja `frontend/config.js`) e funciona
+tanto em `localhost:8088` quanto numa URL pública de túnel, sem alterar nada.
+
+> Alternativa (dev sem proxy): `.\scripts\servir-frontend.ps1` sobe um servidor
+> estático em http://localhost:5500. Nesse caso o site **não** alcança o n8n por
+> caminho relativo, então use o proxy (8088) para testar de verdade.
 
 ---
 

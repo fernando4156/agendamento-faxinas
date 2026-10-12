@@ -1,0 +1,36 @@
+# =============================================================================
+# Caddy - frontend publico + proxy SOMENTE dos webhooks do n8n
+# =============================================================================
+# O editor do n8n (/home, /rest) fica BLOQUEADO de proposito: e onde ficam as
+# credenciais. So os webhooks publicos (/webhook/*) passam para o n8n.
+# =============================================================================
+
+{
+	admin off
+}
+
+:80 {
+	encode gzip
+
+	# --- Webhooks publicos do n8n (usados pelo site da cliente) ---
+	handle /webhook/* {
+		reverse_proxy n8n:5678
+	}
+
+	# --- Bloqueia explicitamente o editor/API interna do n8n ---
+	handle /home/* {
+		respond "Nao disponivel" 404
+	}
+	handle /rest/* {
+		respond "Nao disponivel" 404
+	}
+	handle /healthz {
+		respond "Nao disponivel" 404
+	}
+
+	# --- Todo o resto = site estatico da cliente ---
+	handle {
+		root * /srv/frontend
+		file_server
+	}
+}

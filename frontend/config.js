@@ -4,8 +4,12 @@
    Apenas URLs (que são públicas) ficam aqui.
    ============================================================================= */
 window.FAXINA_CONFIG = {
-  // Base do n8n. Em produção troque por https://seu-dominio.com
-  N8N_BASE_URL: "http://localhost:5678",
+  // Base dos webhooks.
+  // "" (vazio) = mesma origem da página. É o recomendado: o site é servido
+  // pelo Caddy, que encaminha /webhook/* para o n8n. Assim funciona tanto em
+  // http://localhost:8088 quanto numa URL pública de túnel, sem precisar
+  // mudar nada aqui.
+  N8N_BASE_URL: "",
 
   // Caminhos dos webhooks (criados no n8n)
   WEBHOOK_SLOTS: "/webhook/slots-livres",
