@@ -14,5 +14,9 @@ window.FAXINA_CONFIG = {
   // Caminhos dos webhooks (criados no n8n)
   WEBHOOK_SLOTS: "/webhook/slots-livres",
   WEBHOOK_AGENDAMENTO: "/webhook/agendamento-faxina",
-  WEBHOOK_CANCELAMENTO: "/webhook/cancelamento-faxina"
+  WEBHOOK_CANCELAMENTO: "/webhook/cancelamento-faxina",
+
+  // Webhooks do painel de administrador (exigem a chave secreta)
+  WEBHOOK_ADMIN_BLOQUEAR: "/webhook/admin-bloquear",
+  WEBHOOK_ADMIN_LIBERAR: "/webhook/admin-liberar"
 };

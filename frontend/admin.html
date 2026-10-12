@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel do Administrador</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .adm { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
+    .adm h1 { font-size: 1.3rem; margin: 0 0 4px; }
+    .adm .sub { color: var(--muted); font-size: .85rem; margin-bottom: 18px; }
+    .keybox { display: flex; gap: 8px; margin-bottom: 16px; }
+    .keybox input { flex: 1; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: .95rem; }
+    .badge { display:inline-block; padding: 3px 10px; border-radius: 999px; font-size:.72rem; font-weight:700; }
+    .badge.on { background:#dcfce7; color:#15803d; }
+    .badge.off { background:#fee2e2; color:#b91c1c; }
+    .day.bloqueio { background: #fef3c7; color: #92400e; border: 1px dashed #f59e0b; }
+    .day.bloqueio:hover { background: #fde68a; transform: translateY(-2px); }
+    .dot-bloqueio { background: #f59e0b; }
+    .modo { font-size: .8rem; background:#eef2ff; color:#3730a3; padding: 8px 12px; border-radius: 10px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div class="adm">
+    <h1>🛠️ Painel do Administrador</h1>
+    <p class="sub">Bloqueie ou libere datas. Só funciona com a sua chave secreta.</p>
+
+    <div class="keybox">
+      <input id="chave" type="password" placeholder="Cole aqui sua chave de administrador" />
+      <button id="btnSalvarChave" class="btn-primary" type="button">Entrar</button>
+      <button id="btnSair" class="btn-secondary" type="button">Sair</button>
+    </div>
+    <p id="statusChave" class="msg"></p>
+
+    <div class="modo" id="modo" style="display:none">
+      👆 Clique num dia <b>verde</b> para <b>bloquear</b>, ou num dia <b>laranja</b> para <b>liberar</b>.
+    </div>
+
+    <section class="card">
+      <div class="cal-header">
+        <button id="btnPrev" type="button" aria-label="Mês anterior">&#8249;</button>
+        <h2 id="tituloMes">—</h2>
+        <button id="btnNext" type="button" aria-label="Próximo mês">&#8250;</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot dot-free"></i> Livre</span>
+        <span><i class="dot dot-busy"></i> Reservado</span>
+        <span><i class="dot dot-bloqueio"></i> Bloqueado por você</span>
+        <span><i class="dot dot-closed"></i> Fechado</span>
+        <span><i class="dot dot-disabled"></i> Passado</span>
+      </div>
+
+      <div id="grid" class="grid"></div>
+      <p id="status" class="status"></p>
+    </section>
+  </div>
+
+  <script src="config.js?v=3"></script>
+  <script src="admin.js?v=3"></script>
+</body>
+</html>

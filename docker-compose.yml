@@ -128,6 +128,10 @@ services:
       # Chave que cifra as credenciais salvas. Gere e guarde; se perder, perde
       # as credenciais gravadas.
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # Chave do painel de administrador (bloquear/liberar datas)
+      ADMIN_KEY: ${ADMIN_KEY}
+      # Permite ler ADMIN_KEY dentro dos Code nodes dos workflows
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       # Necessario para o login funcionar via http://localhost
       N8N_SECURE_COOKIE: "false"
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"

@@ -130,6 +130,8 @@ Os fluxos ficam na pasta [`workflows/`](./workflows) e são **importáveis** no 
 | `01-agendamento-faxina.json`         | Recebe o agendamento e avisa no WhatsApp |
 | `02-cancelamento-faxina.json`        | Cancela e libera a data, avisando no WhatsApp |
 | `03-slots-livres.json`               | Get Free Slots: informa as datas ocupadas ao frontend |
+| `04-admin-bloquear.json`             | **Admin:** bloqueia uma data (exige a chave secreta) |
+| `05-admin-liberar.json`              | **Admin:** libera uma data bloqueada |
 | `99-teste-whatsapp.json`             | **Teste isolado** do caminho do WhatsApp (sem Google Calendar) |
 
 Detalhes de cada nó e como configurar: **[`docs/n8n-workflows.md`](./docs/n8n-workflows.md)**.
@@ -150,12 +152,16 @@ agendamento-faxinas/
 │   ├── 01-agendamento-faxina.json
 │   ├── 02-cancelamento-faxina.json
 │   ├── 03-slots-livres.json
+│   ├── 04-admin-bloquear.json
+│   ├── 05-admin-liberar.json
 │   └── 99-teste-whatsapp.json
 ├── frontend/
 │   ├── index.html                # página da cliente (calendário + formulários)
+│   ├── admin.html                # painel do administrador (bloquear/liberar)
 │   ├── styles.css
 │   ├── config.js                 # só URLs públicas (sem segredos)
-│   └── app.js
+│   ├── app.js
+│   └── admin.js
 ├── scripts/
 │   ├── testar-whatsapp.ps1       # dispara um teste do WhatsApp
 │   ├── abrir-qrcode.ps1          # gera a página do QR Code (conectar WhatsApp)
@@ -215,6 +221,21 @@ curl.exe -X POST http://localhost:5678/webhook/teste-whatsapp `
 A mensagem deve chegar no número `5521970762629`.
 
 > 🔁 Para voltar à produção, troque o número nos fluxos `01`, `02` e `99` pelo WhatsApp da sua mãe.
+
+---
+
+## 🛠️ Painel do Administrador
+
+Página **separada e protegida por chave** para bloquear/liberar datas — só você tem acesso.
+
+- URL: `.../admin.html` (ex.: http://localhost:8088/admin.html)
+- Digite a **chave** definida em `ADMIN_KEY` no `.env` (fica salva só no seu navegador)
+- Clique num dia **verde** para **bloquear** ou num dia **laranja** para **liberar**
+- Bloquear cria um evento `BLOQUEADO` na agenda; liberar apaga esse evento
+- O site da cliente passa a mostrar o dia como **indisponível** na hora
+
+> 🔐 A chave nunca vai para o GitHub (só o modelo fica em `.env.example`) e é
+> validada no servidor (n8n) a cada ação. Sem a chave, os webhooks respondem erro.
 
 ---
 

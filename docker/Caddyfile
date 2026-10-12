@@ -31,6 +31,8 @@
 	# --- Todo o resto = site estatico da cliente ---
 	handle {
 		root * /srv/frontend
+		# Sem cache: garante que o navegador sempre pegue a versao atual
+		header Cache-Control "no-store, must-revalidate"
 		file_server
 	}
 }

@@ -4,6 +4,8 @@
 (function () {
   "use strict";
 
+  window.__faxinaVersion = "v3-admin";
+
   const cfg = window.FAXINA_CONFIG || {};
   const base = String(cfg.N8N_BASE_URL || "").replace(/\/+$/, "");
 
@@ -21,6 +23,7 @@
     month: hoje.getMonth(),   // 0-based
     ocupados: new Set(),
     bloqueados: new Set(),
+    adminBloqueios: new Set(),
     carregando: false
   };
 
@@ -48,6 +51,9 @@
       );
       state.bloqueados = new Set(
         (data.diasBloqueados || []).map((s) => String(s).substring(0, 10))
+      );
+      state.adminBloqueios = new Set(
+        (data.diasBloqueadosAdmin || []).map((s) => String(s).substring(0, 10))
       );
       el("status").textContent = "";
     } catch (err) {
@@ -100,10 +106,10 @@
         cell.classList.add("busy");
         cell.disabled = true;
         cell.title = "Já reservado";
-      } else if (state.bloqueados.has(iso)) {
+      } else if (state.bloqueados.has(iso) || state.adminBloqueios.has(iso)) {
         cell.classList.add("closed");
         cell.disabled = true;
-        cell.title = "Fechado - não atendemos aos fins de semana";
+        cell.title = "Indisponível";
       } else {
         cell.classList.add("free");
         cell.title = "Disponível - clique para agendar";

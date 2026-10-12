@@ -1,0 +1,118 @@
+{
+  "id": "wfAdminLiberar01",
+  "name": "05 - Admin Liberar Data",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "admin-liberar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ab111111-1111-4111-8111-111111111111",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-620, 0],
+      "webhookId": "admin-liberar"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Valida a chave e monta o intervalo do dia\nconst src = $input.first().json;\nlet b = (src && src.body !== undefined) ? src.body : src;\nif (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }\nif (!b || typeof b !== 'object') b = {};\n\nconst esperado = $env.ADMIN_KEY;\nif (!esperado) { throw new Error('ADMIN_KEY nao configurada no servidor.'); }\nif (String(b.chave || '') !== String(esperado)) { throw new Error('Chave de administrador invalida.'); }\n\nconst data = String(b.data || '').substring(0, 10);\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(data)) { throw new Error('Data invalida. Envie YYYY-MM-DD.'); }\n\nreturn [{ json: { data: data, timeMin: data + 'T00:00:00-03:00', timeMax: data + 'T23:59:59-03:00' } }];"
+      },
+      "id": "ab222222-2222-4222-8222-222222222222",
+      "name": "Validar Chave",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-400, 0]
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/fernandomateusold1@gmail.com/events?timeMin={{ encodeURIComponent($json.timeMin) }}&timeMax={{ encodeURIComponent($json.timeMax) }}&singleEvents=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {}
+      },
+      "id": "ab333333-3333-4333-8333-333333333333",
+      "name": "Buscar Eventos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-180, 0],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "uLcZxG74bKdnNEyr",
+          "name": "Google Calendar - Faxinas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Filtra os eventos de BLOQUEIO do dia\nconst d = $input.first().json || {};\nconst items = d.items || [];\nconst alvos = items.filter(function (e) { return String(e.summary || '').toUpperCase().indexOf('BLOQUEADO') === 0; });\n\nif (alvos.length === 0) {\n  return [{ json: { id: '__nenhum__', resumo: 'nenhum', data: $('Validar Chave').first().json.data } }];\n}\nreturn alvos.map(function (e) {\n  return { json: { id: e.id, resumo: e.summary, data: $('Validar Chave').first().json.data } };\n});"
+      },
+      "id": "ab444444-4444-4444-8444-444444444444",
+      "name": "Filtrar Bloqueios",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [60, 0]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/fernandomateusold1@gmail.com/events/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ab555555-5555-4555-8555-555555555555",
+      "name": "Apagar Bloqueio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 0],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "uLcZxG74bKdnNEyr",
+          "name": "Google Calendar - Faxinas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'ok', acao: 'liberado', data: $('Validar Chave').first().json.data, removidos: $('Filtrar Bloqueios').all().map(i => i.json.resumo).filter(r => r !== 'nenhum') }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" },
+              { "name": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" }
+            ]
+          }
+        }
+      },
+      "id": "ab666666-6666-4666-8666-666666666666",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [540, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Validar Chave", "type": "main", "index": 0 }]] },
+    "Validar Chave": { "main": [[{ "node": "Buscar Eventos", "type": "main", "index": 0 }]] },
+    "Buscar Eventos": { "main": [[{ "node": "Filtrar Bloqueios", "type": "main", "index": 0 }]] },
+    "Filtrar Bloqueios": { "main": [[{ "node": "Apagar Bloqueio", "type": "main", "index": 0 }]] },
+    "Apagar Bloqueio": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
