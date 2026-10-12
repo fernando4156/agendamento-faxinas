@@ -20,6 +20,7 @@
     year: hoje.getFullYear(),
     month: hoje.getMonth(),   // 0-based
     ocupados: new Set(),
+    bloqueados: new Set(),
     carregando: false
   };
 
@@ -44,6 +45,9 @@
       const data = await resp.json();
       state.ocupados = new Set(
         (data.diasOcupados || []).map((s) => String(s).substring(0, 10))
+      );
+      state.bloqueados = new Set(
+        (data.diasBloqueados || []).map((s) => String(s).substring(0, 10))
       );
       el("status").textContent = "";
     } catch (err) {
@@ -96,6 +100,10 @@
         cell.classList.add("busy");
         cell.disabled = true;
         cell.title = "Já reservado";
+      } else if (state.bloqueados.has(iso)) {
+        cell.classList.add("closed");
+        cell.disabled = true;
+        cell.title = "Fechado - não atendemos aos fins de semana";
       } else {
         cell.classList.add("free");
         cell.title = "Disponível - clique para agendar";

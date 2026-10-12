@@ -61,7 +61,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// Extrai os dias que possuem algum evento (ocupados)\nconst cfg = $('Calcular Mes').first().json;\nconst ocupados = new Set();\n\nfor (const item of $input.all()) {\n  const ev = item.json || {};\n  const start = ev.start || ev.startDate || {};\n  const bruto = (typeof start === 'object') ? (start.date || start.dateTime) : start;\n  if (!bruto) continue;\n  ocupados.add(String(bruto).substring(0, 10));\n}\n\nconst diasOcupados = Array.from(ocupados).sort();\nconst diasLivres = cfg.todos.filter((d) => !ocupados.has(d));\n\nreturn [{ json: { mes: cfg.mes, diasOcupados, diasLivres } }];"
+        "jsCode": "// Extrai os dias ocupados (eventos) e os bloqueados (fim de semana)\nconst cfg = $('Calcular Mes').first().json;\nconst ocupados = new Set();\n\nfor (const item of $input.all()) {\n  const ev = item.json || {};\n  const start = ev.start || ev.startDate || {};\n  const bruto = (typeof start === 'object') ? (start.date || start.dateTime) : start;\n  if (!bruto) continue;\n  ocupados.add(String(bruto).substring(0, 10));\n}\n\n// Dias em que NAO se trabalha: 0 = domingo, 6 = sabado\nconst DIAS_FECHADOS = [0, 6];\nconst bloqueados = cfg.todos.filter(function (d) {\n  const p = d.split('-').map(Number);\n  const wd = new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay();\n  return DIAS_FECHADOS.indexOf(wd) >= 0;\n});\n\nconst diasOcupados = Array.from(ocupados).sort();\nconst diasLivres = cfg.todos.filter(function (d) {\n  return !ocupados.has(d) && bloqueados.indexOf(d) < 0;\n});\n\nreturn [{ json: { mes: cfg.mes, diasOcupados: diasOcupados, diasBloqueados: bloqueados, diasLivres: diasLivres } }];"
       },
       "id": "b4444444-4444-4444-8444-444444444444",
       "name": "Formatar Dias Ocupados",
@@ -72,7 +72,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ mes: $json.mes, diasOcupados: $json.diasOcupados, diasLivres: $json.diasLivres }) }}",
+        "responseBody": "={{ JSON.stringify({ mes: $json.mes, diasOcupados: $json.diasOcupados, diasBloqueados: $json.diasBloqueados, diasLivres: $json.diasLivres }) }}",
         "options": {
           "responseHeaders": {
             "entries": [
