@@ -110,7 +110,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ number: '5511999999999', text: $json.texto }) }}",
+        "jsonBody": "={{ JSON.stringify({ number: '5521970762629', text: $json.texto }) }}",
         "options": {}
       },
       "id": "a7777777-7777-4777-8777-777777777777",

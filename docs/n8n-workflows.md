@@ -38,7 +38,7 @@ Os dois arquivos JSON desta pasta são workflows prontos para **importar** no n8
 3. **Google Calendar - Criar Evento** — troque `SEU_CALENDAR_ID@group.calendar.google.com` pelo ID real e vincule a credencial OAuth2.
 4. **Evolution API - Enviar WhatsApp**
    - URL: mantenha `http://evolution-api:8080` (nome do serviço na rede do Docker) e troque `faxinas` pelo nome da instância.
-   - Número: troque `5511999999999` pelo WhatsApp da sua mãe (só dígitos, com `55`).
+   - Número: hoje está em **modo teste**, apontando para `5521970762629` (número do Fernando). Em produção, troque pelo WhatsApp da sua mãe (só dígitos, com `55`).
    - **Autenticação:** crie uma credencial do tipo **Header Auth** com `Name = apikey` e `Value = AUTHENTICATION_API_KEY`. Assim a chave fica no cofre do n8n, **não** no JSON.
 
 ### Diagrama da mensagem gerada
@@ -121,6 +121,30 @@ O frontend roda em outra origem (ex.: `http://localhost:5500`), então dois cuid
 2. **`POST` de agendamento/cancelamento:** o frontend envia o corpo como `Content-Type: text/plain` (um tipo "simples", que **não** dispara *preflight* `OPTIONS`). Por isso os nós `code` fazem `JSON.parse` quando o corpo chega como texto.
 
 > Se você publicar o frontend atrás de um domínio próprio, pode trocar `*` pelo domínio exato na lista de origens permitidas.
+
+---
+
+## 4) `99-teste-whatsapp.json` — Teste isolado do WhatsApp
+
+**Fluxo:** `Webhook → Montar Mensagem de Teste → Evolution API (sendText) → Responder`
+
+Serve para validar **somente** a Evolution API + a instância pareada + o número de destino,
+sem passar pelo Google Calendar.
+
+| # | Nó | Tipo | O que faz |
+|---|----|------|-----------|
+| 1 | **Webhook - Teste WhatsApp** | `webhook` | `POST /webhook/teste-whatsapp`. |
+| 2 | **Montar Mensagem de Teste** | `code` | Aceita `{ "texto": "..." }`; se vazio, usa uma mensagem padrão com o horário. Destino padrão: `5521970762629`. |
+| 3 | **Evolution API - Enviar Teste** | `httpRequest` | Envia a mensagem. Usa a credencial **Header Auth** `apikey`. |
+| 4 | **Responder Teste** | `respondToWebhook` | Devolve `{ status, enviadoPara, mensagem }` + CORS. |
+
+### Testar
+
+```powershell
+curl.exe -X POST http://localhost:5678/webhook/teste-whatsapp -H "Content-Type: application/json" -d '{"texto":"Teste do sistema"}'
+```
+
+Permite também escolher outro destino no próprio corpo: `{ "texto": "...", "destino": "55DDDNUMERO" }`.
 
 ---
 

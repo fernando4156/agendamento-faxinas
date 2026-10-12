@@ -1,0 +1,95 @@
+{
+  "name": "99 - Teste WhatsApp (isolado)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "teste-whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c1111111-1111-4111-8111-111111111111",
+      "name": "Webhook - Teste WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-480, 0],
+      "webhookId": "teste-whatsapp"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Fluxo de TESTE: valida somente o caminho do WhatsApp (Evolution API).\n// Nao usa Google Calendar nem qualquer outra dependencia.\n\nconst src = $input.first().json;\nlet b = (src && src.body !== undefined) ? src.body : src;\nif (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }\nif (!b || typeof b !== 'object') { b = {}; }\n\nconst pad = (n) => String(n).padStart(2, '0');\nconst agora = new Date();\nconst carimbo = `${pad(agora.getDate())}/${pad(agora.getMonth() + 1)}/${agora.getFullYear()} ${pad(agora.getHours())}:${pad(agora.getMinutes())}`;\n\n// MODO TESTE - numero do Fernando. Em producao, trocar pelo da mae.\nconst destino = b.destino || '5521970762629';\n\nconst texto = b.texto || `🧪 Teste do sistema de agendamento de faxinas\\n✅ Conexao com a Evolution API funcionando!\\n🕒 Enviado em: ${carimbo}`;\n\nreturn [{ json: { destino, texto } }];"
+      },
+      "id": "c2222222-2222-4222-8222-222222222222",
+      "name": "Montar Mensagem de Teste",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evolution-api:8080/message/sendText/faxinas",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.destino, text: $json.texto }) }}",
+        "options": {}
+      },
+      "id": "c3333333-3333-4333-8333-333333333333",
+      "name": "Evolution API - Enviar Teste",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [20, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "name": "Evolution API - apikey"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'ok', enviadoPara: $('Montar Mensagem de Teste').first().json.destino, mensagem: 'Teste disparado! Confira o WhatsApp.' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "id": "c4444444-4444-4444-8444-444444444444",
+      "name": "Responder Teste",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [280, 0]
+    }
+  ],
+  "connections": {
+    "Webhook - Teste WhatsApp": {
+      "main": [
+        [{ "node": "Montar Mensagem de Teste", "type": "main", "index": 0 }]
+      ]
+    },
+    "Montar Mensagem de Teste": {
+      "main": [
+        [{ "node": "Evolution API - Enviar Teste", "type": "main", "index": 0 }]
+      ]
+    },
+    "Evolution API - Enviar Teste": {
+      "main": [
+        [{ "node": "Responder Teste", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

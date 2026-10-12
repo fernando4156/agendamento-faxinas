@@ -99,6 +99,7 @@ Os fluxos ficam na pasta [`workflows/`](./workflows) e são **importáveis** no 
 | `01-agendamento-faxina.json`         | Recebe o agendamento e avisa no WhatsApp |
 | `02-cancelamento-faxina.json`        | Cancela e libera a data, avisando no WhatsApp |
 | `03-slots-livres.json`               | Get Free Slots: informa as datas ocupadas ao frontend |
+| `99-teste-whatsapp.json`             | **Teste isolado** do caminho do WhatsApp (sem Google Calendar) |
 
 Detalhes de cada nó e como configurar: **[`docs/n8n-workflows.md`](./docs/n8n-workflows.md)**.
 
@@ -116,7 +117,8 @@ agendamento-faxinas/
 ├── workflows/
 │   ├── 01-agendamento-faxina.json
 │   ├── 02-cancelamento-faxina.json
-│   └── 03-slots-livres.json
+│   ├── 03-slots-livres.json
+│   └── 99-teste-whatsapp.json
 ├── frontend/
 │   ├── index.html                # página da cliente (calendário + formulários)
 │   ├── styles.css
@@ -150,6 +152,27 @@ python -m http.server 5500
 
 Ou use a extensão **Live Server** do VS Code. Ajuste a URL do n8n em `frontend/config.js`
 (`N8N_BASE_URL`) se necessário.
+
+---
+
+## 🧪 Teste rápido do WhatsApp (modo teste)
+
+O destino das notificações está em **modo teste**, apontando para `5521970762629` (número do Fernando).
+Para validar **apenas o caminho do WhatsApp** (sem depender do Google Calendar), use o fluxo isolado `99`:
+
+1. Importe `workflows/99-teste-whatsapp.json` no n8n.
+2. Crie a credencial **Header Auth** (`apikey` = `AUTHENTICATION_API_KEY`) e vincule no nó HTTP.
+3. Ative o fluxo e dispare:
+
+```powershell
+curl.exe -X POST http://localhost:5678/webhook/teste-whatsapp `
+  -H "Content-Type: application/json" `
+  -d '{"texto":"Teste do sistema de faxinas"}'
+```
+
+A mensagem deve chegar no número `5521970762629`.
+
+> 🔁 Para voltar à produção, troque o número nos fluxos `01`, `02` e `99` pelo WhatsApp da sua mãe.
 
 ---
 
