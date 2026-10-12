@@ -77,12 +77,17 @@ services:
 
   # ---------------------------------------------------------------------------
   # Evolution Manager (UI para criar instancia e escanear o QR Code)
-  # Pode ser removido depois que a instancia estiver conectada.
+  # Opcional: so sobe com --profile manager
+  #   docker compose --profile manager up -d
+  # Obs: a imagem "latest" atual tem um bug de nginx e entra em loop; use a
+  # pagina local de QR (scripts) ou uma versao fixa se precisar do Manager.
   # ---------------------------------------------------------------------------
   evolution-manager:
     image: evoapicloud/evolution-manager:latest
     container_name: faxina_evolution_manager
-    restart: unless-stopped
+    restart: "no"
+    profiles:
+      - manager
     depends_on:
       - evolution-api
     ports:

@@ -1,4 +1,5 @@
 {
+  "id": "wfAgendamento001",
   "name": "01 - Agendamento de Faxina",
   "nodes": [
     {
@@ -73,7 +74,7 @@
       "position": [280, 0],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "id": "evoApiKeyCred001",
           "name": "Evolution API - apikey"
         }
       }

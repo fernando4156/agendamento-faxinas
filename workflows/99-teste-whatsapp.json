@@ -1,4 +1,5 @@
 {
+  "id": "wfTesteWhatsApp1",
   "name": "99 - Teste WhatsApp (isolado)",
   "nodes": [
     {
@@ -45,7 +46,7 @@
       "position": [20, 0],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "id": "evoApiKeyCred001",
           "name": "Evolution API - apikey"
         }
       }

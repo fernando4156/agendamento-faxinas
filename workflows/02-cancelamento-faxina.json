@@ -1,4 +1,5 @@
 {
+  "id": "wfCancelamento01",
   "name": "02 - Cancelamento de Faxina",
   "nodes": [
     {
@@ -120,7 +121,7 @@
       "position": [1060, 0],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "id": "evoApiKeyCred001",
           "name": "Evolution API - apikey"
         }
       }
