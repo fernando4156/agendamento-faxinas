@@ -5,6 +5,8 @@
 (function () {
   "use strict";
 
+  window.__adminVersion = "v2";
+
   const cfg = window.FAXINA_CONFIG || {};
   const base = String(cfg.N8N_BASE_URL || "").replace(/\/+$/, "");
 
@@ -23,12 +25,19 @@
     ocupados: new Set(),
     bloqueios: new Set(),
     fechados: new Set(),
-    chave: localStorage.getItem("faxinaAdminKey") || ""
+    chave: localStorage.getItem("faxinaAdminKey") || "",
+    ocupado: false
   };
 
   function hojeStr() {
     const t = new Date();
     return ymd(t.getFullYear(), t.getMonth(), t.getDate());
+  }
+
+  function aviso(texto, tipo) {
+    const s = el("status");
+    s.textContent = texto || "";
+    s.className = "status " + (tipo || "");
   }
 
   function atualizarStatusChave() {
@@ -46,18 +55,18 @@
   }
 
   async function carregar() {
-    el("status").textContent = "Carregando...";
+    aviso("Carregando agenda...");
     try {
-      const resp = await fetch(`${base}${cfg.WEBHOOK_SLOTS}?mes=${state.year}-${pad(state.month + 1)}`);
+      const resp = await fetch(`${base}${cfg.WEBHOOK_SLOTS}?mes=${state.year}-${pad(state.month + 1)}&_=${Date.now()}`);
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       const data = await resp.json();
       state.ocupados = new Set((data.diasOcupados || []).map((s) => String(s).substring(0, 10)));
       state.bloqueios = new Set((data.diasBloqueadosAdmin || []).map((s) => String(s).substring(0, 10)));
       state.fechados = new Set((data.diasBloqueados || []).map((s) => String(s).substring(0, 10)));
-      el("status").textContent = "";
+      aviso("");
     } catch (e) {
       console.error(e);
-      el("status").textContent = "Não consegui carregar a agenda.";
+      aviso("Não consegui carregar a agenda (" + e.message + "). Verifique se o n8n está no ar.", "erro");
     }
     renderCalendario();
   }
@@ -97,30 +106,35 @@
         cell.title = "Data passada";
       } else if (state.bloqueios.has(iso)) {
         cell.classList.add("bloqueio");
-        cell.title = "Bloqueado por você - clique para liberar";
+        cell.title = "Bloqueado por você - clique para LIBERAR";
         cell.addEventListener("click", () => agir("liberar", iso));
       } else if (state.ocupados.has(iso)) {
         cell.classList.add("busy");
         cell.disabled = true;
-        cell.title = "Reservado por uma cliente";
+        cell.title = "Reservado por uma cliente (não altera por aqui)";
       } else if (state.fechados.has(iso)) {
         cell.classList.add("closed");
         cell.disabled = true;
-        cell.title = "Fechado (fim de semana)";
+        cell.title = "Fechado automaticamente (fim de semana)";
       } else {
         cell.classList.add("free");
-        cell.title = "Livre - clique para bloquear";
+        cell.title = "Livre - clique para BLOQUEAR";
         cell.addEventListener("click", () => agir("bloquear", iso));
       }
       grid.appendChild(cell);
     }
+
+    el("btnPrev").disabled = (state.year === hoje.getFullYear() && state.month === hoje.getMonth());
   }
 
   async function agir(acao, iso) {
+    if (state.ocupado) return;
+
     if (!state.chave) {
-      el("status").textContent = "Digite sua chave de administrador primeiro.";
+      aviso("Digite sua chave de administrador e clique em Entrar primeiro.", "erro");
       return;
     }
+
     const [y, m, d] = iso.split("-");
     const bonita = `${d}/${m}/${y}`;
     const pergunta = acao === "bloquear"
@@ -128,7 +142,9 @@
       : `Liberar o dia ${bonita}?`;
     if (!window.confirm(pergunta)) return;
 
-    el("status").textContent = acao === "bloquear" ? "Bloqueando..." : "Liberando...";
+    state.ocupado = true;
+    aviso(acao === "bloquear" ? "Bloqueando..." : "Liberando...");
+
     const url = base + (acao === "bloquear" ? cfg.WEBHOOK_ADMIN_BLOQUEAR : cfg.WEBHOOK_ADMIN_LIBERAR);
     try {
       const resp = await fetch(url, {
@@ -136,12 +152,29 @@
         headers: { "Content-Type": "text/plain;charset=UTF-8" },
         body: JSON.stringify({ chave: state.chave, data: iso })
       });
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
-      el("status").textContent = acao === "bloquear" ? `Dia ${bonita} bloqueado ✅` : `Dia ${bonita} liberado ✅`;
+
+      const texto = await resp.text();
+      let dados = null;
+      try { dados = JSON.parse(texto); } catch (e) { dados = null; }
+
+      if (!resp.ok) {
+        if (resp.status === 500) {
+          throw new Error("chave de administrador inválida");
+        }
+        throw new Error("HTTP " + resp.status);
+      }
+      if (!dados || dados.status !== "ok") {
+        throw new Error("resposta inesperada do servidor (proxy/túnel?)");
+      }
+
+      aviso((acao === "bloquear" ? `✅ Dia ${bonita} BLOQUEADO` : `✅ Dia ${bonita} LIBERADO`) + " (atualizando...)", "ok");
       await carregar();
+      aviso((acao === "bloquear" ? `✅ Dia ${bonita} BLOQUEADO` : `✅ Dia ${bonita} LIBERADO`), "ok");
     } catch (e) {
       console.error(e);
-      el("status").textContent = "Falhou. Confira sua chave de administrador.";
+      aviso("❌ Falhou: " + e.message + ". " + (e.message.indexOf("chave") >= 0 ? "Confira a chave no .env (ADMIN_KEY)." : ""), "erro");
+    } finally {
+      state.ocupado = false;
     }
   }
 
@@ -156,12 +189,19 @@
       carregar();
     });
 
+    el("chave").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") el("btnSalvarChave").click();
+    });
+
     el("btnSair").addEventListener("click", () => {
       state.chave = "";
       el("chave").value = "";
       localStorage.removeItem("faxinaAdminKey");
       atualizarStatusChave();
     });
+
+    const btnAtualizar = el("btnAtualizar");
+    if (btnAtualizar) btnAtualizar.addEventListener("click", () => carregar());
 
     el("btnPrev").addEventListener("click", () => {
       const t = new Date();
