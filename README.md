@@ -124,6 +124,8 @@ agendamento-faxinas/
 │   ├── styles.css
 │   ├── config.js                 # só URLs públicas (sem segredos)
 │   └── app.js
+├── scripts/
+│   └── testar-whatsapp.ps1       # dispara um teste do WhatsApp
 ├── docs/
 │   └── n8n-workflows.md          # explicação nó a nó
 └── README.md
@@ -165,6 +167,10 @@ Para validar **apenas o caminho do WhatsApp** (sem depender do Google Calendar),
 3. Ative o fluxo e dispare:
 
 ```powershell
+# script pronto (recomendado)
+.\scripts\testar-whatsapp.ps1
+
+# ou direto com curl
 curl.exe -X POST http://localhost:5678/webhook/teste-whatsapp `
   -H "Content-Type: application/json" `
   -d '{"texto":"Teste do sistema de faxinas"}'
