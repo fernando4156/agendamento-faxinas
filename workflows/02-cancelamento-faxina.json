@@ -33,7 +33,7 @@
         "operation": "getAll",
         "calendar": {
           "__rl": true,
-          "value": "SEU_CALENDAR_ID@group.calendar.google.com",
+          "value": "fernandomateusold1@gmail.com",
           "mode": "id"
         },
         "returnAll": true,
@@ -51,7 +51,7 @@
       "position": [20, 0],
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "id": "uLcZxG74bKdnNEyr",
           "name": "Google Calendar - Faxinas"
         }
       }
@@ -73,7 +73,7 @@
         "operation": "delete",
         "calendar": {
           "__rl": true,
-          "value": "SEU_CALENDAR_ID@group.calendar.google.com",
+          "value": "fernandomateusold1@gmail.com",
           "mode": "id"
         },
         "eventId": "={{ $json.id }}",
@@ -86,7 +86,7 @@
       "position": [540, 0],
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "id": "uLcZxG74bKdnNEyr",
           "name": "Google Calendar - Faxinas"
         }
       }

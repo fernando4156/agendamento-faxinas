@@ -33,7 +33,7 @@
         "operation": "create",
         "calendar": {
           "__rl": true,
-          "value": "SEU_CALENDAR_ID@group.calendar.google.com",
+          "value": "fernandomateusold1@gmail.com",
           "mode": "id"
         },
         "start": "={{ $json.inicioISO }}",
@@ -51,7 +51,7 @@
       "position": [20, 0],
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "SUBSTITUA_PELA_CREDENCIAL",
+          "id": "uLcZxG74bKdnNEyr",
           "name": "Google Calendar - Faxinas"
         }
       }
