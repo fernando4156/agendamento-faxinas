@@ -82,10 +82,22 @@ Depois de subir, os serviços ficam em:
 | n8n                 | http://localhost:5678   | Editar os fluxos de automação             |
 
 ### Conectar o WhatsApp
-1. Abra http://localhost:3000 (Manager).
-2. Faça login com a `AUTHENTICATION_API_KEY` do seu `.env`.
-3. Crie a instância com o nome definido em `EVOLUTION_INSTANCE_NAME` (padrão: `faxinas`).
-4. Escaneie o QR Code com o WhatsApp da sua mãe (Aparelhos conectados).
+
+> ⚠️ O **Evolution Manager** oficial (`evoapicloud/evolution-manager:latest`) está com um bug de nginx e entra em loop. Por isso ele agora é **opcional** (atrás de um *profile*) e usamos um gerador de QR próprio.
+
+1. Com o stack no ar, rode:
+   ```powershell
+   .\scripts\abrir-qrcode.ps1
+   ```
+2. Abra **http://localhost:5500** no navegador.
+3. Escaneie o QR com o WhatsApp (Aparelhos conectados → Conectar um aparelho). A página renova o QR sozinha.
+4. Quando aparecer "Conectado com sucesso!", pronto.
+
+Se preferir tentar o Manager oficial mesmo assim:
+```powershell
+docker compose --profile manager up -d
+docker compose logs -f evolution-manager   # note que ele pode reiniciar em loop
+```
 
 ---
 
@@ -125,7 +137,8 @@ agendamento-faxinas/
 │   ├── config.js                 # só URLs públicas (sem segredos)
 │   └── app.js
 ├── scripts/
-│   └── testar-whatsapp.ps1       # dispara um teste do WhatsApp
+│   ├── testar-whatsapp.ps1       # dispara um teste do WhatsApp
+│   └── abrir-qrcode.ps1          # gera a página do QR Code (conectar WhatsApp)
 ├── docs/
 │   └── n8n-workflows.md          # explicação nó a nó
 └── README.md
