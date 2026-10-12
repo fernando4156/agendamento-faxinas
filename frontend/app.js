@@ -241,5 +241,11 @@
     el("formCancel").addEventListener("submit", enviarCancelamento);
 
     carregarSlots();
+
+    // Atualiza a agenda sozinho a cada 60s (sem atrapalhar se o formulario
+    // estiver aberto), para refletir mudancas que a mae fizer no Google Calendar
+    setInterval(() => {
+      if (el("modal").classList.contains("hidden")) carregarSlots();
+    }, 60000);
   });
 })();
