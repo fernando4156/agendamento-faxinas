@@ -224,6 +224,22 @@ A mensagem deve chegar no número `5521970762629`.
 
 ---
 
+## 🚫 Como marcar um dia como indisponível
+
+Há **duas** formas — e o sistema só bloqueia se for uma delas (ou fim de semana):
+
+| Forma | Como |
+|---|---|
+| **Painel admin** | Clique no dia em `/admin.html` → cria um evento `BLOQUEADO` |
+| **Pelo Google Calendar** | Crie um evento cujo **título** contenha uma destas palavras: `FOLGA`, `NÃO TRABALHO`, `BLOQUEADO` ou `INDISPONÍVEL` |
+| **Fim de semana** | Automático (sábado e domingo) |
+
+> ℹ️ **Lembretes pessoais são ignorados.** Um evento como "Parabéns pra tia" ou
+> "Consulta médica" **não** bloqueia o dia. Só os títulos acima bloqueiam. (Se
+> quiser que um lembrete bloqueie, é só editar o título e incluir uma das palavras.)
+
+---
+
 ## 🛠️ Painel do Administrador
 
 Página **separada e protegida por chave** para bloquear/liberar datas — só você tem acesso.
